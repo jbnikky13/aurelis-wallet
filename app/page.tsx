@@ -1,59 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { formatUsd } from '@/lib/wallet/format';
-
-const assets = [
-  { symbol: 'ETH', name: 'Ethereum', amount: '0.00', price: 0 },
-  { symbol: 'USDC', name: 'USD Coin', amount: '0.00', price: 1 },
-  { symbol: 'USDT', name: 'Tether', amount: '0.00', price: 1 },
-];
-
-const networks = ['Base', 'Ethereum', 'BNB Chain', 'Polygon', 'Arbitrum', 'Optimism', 'Avalanche'];
+import { useEffect, useMemo, useState } from 'react';
+import { formatEther } from 'viem';
+import { accountFromMnemonic } from '@/lib/wallet/mnemonic';
+import { decryptWallet, hasEncryptedWallet } from '@/lib/wallet/crypto';
+import { AURELIS_CHAINS, DEFAULT_CHAIN } from '@/lib/chains';
+import { publicClientFor } from '@/lib/providers';
 
 export default function Home() {
-  const [network, setNetwork] = useState('Base');
-  const [showReceive, setShowReceive] = useState(false);
-  const [address] = useState('0x0000000000000000000000000000000000000000');
+  const [address, setAddress] = useState<`0x${string}` | null>(null);
+  const [balance, setBalance] = useState('0');
+  const [unlock, setUnlock] = useState('');
+  const [error, setError] = useState('');
+  const [chainId, setChainId] = useState(DEFAULT_CHAIN.id);
+  const chain = useMemo(() => AURELIS_CHAINS.find((c) => c.id === chainId) ?? DEFAULT_CHAIN, [chainId]);
 
-  return (
-    <main className="min-h-screen px-5 py-6 md:px-10">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex items-center justify-between">
-          <div><div className="text-2xl font-black tracking-tight">AURELIS</div><div className="muted text-xs">Web3 wallet</div></div>
-          <div className="card flex items-center gap-2 px-3 py-2 text-sm">
-            <span className="h-2 w-2 rounded-full bg-green-400" />
-            <select value={network} onChange={(e) => setNetwork(e.target.value)} className="bg-transparent outline-none">{networks.map(n => <option className="bg-[#0d1118]" key={n}>{n}</option>)}</select>
-          </div>
-        </header>
+  useEffect(() => { const params = new URLSearchParams(window.location.search); const a = params.get('address') as `0x${string}` | null; if (a) setAddress(a); }, []);
+  useEffect(() => { if (!address) return; let active = true; publicClientFor(chain).getBalance({ address }).then(v => active && setBalance(formatEther(v))).catch(() => active && setBalance('0')); return () => { active = false; }; }, [address, chain]);
+  async function unlockWallet() { try { setError(''); const phrase = await decryptWallet(unlock); setAddress(accountFromMnemonic(phrase).address); setUnlock(''); } catch { setError('Unable to unlock wallet. Check your password.'); } }
 
-        <section className="card mb-6 overflow-hidden p-7 md:p-10">
-          <div className="muted text-sm">Total portfolio</div>
-          <div className="mt-2 text-4xl font-bold">{formatUsd(0)}</div>
-          <div className="muted mt-2 text-sm">No assets yet • {network}</div>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <button className="rounded-xl bg-white px-5 py-3 font-semibold text-black">+ Add funds</button>
-            <button onClick={() => setShowReceive(true)} className="rounded-xl border border-[#263142] px-5 py-3 font-semibold">Receive</button>
-            <button className="rounded-xl border border-[#263142] px-5 py-3 font-semibold">Send</button>
-          </div>
-        </section>
+  if (!address) return <main className="shell"><section className="card hero"><p className="eyebrow">AURELIS</p><h1>Your keys.<br/>Your assets.<br/>Your control.</h1><p className="muted">A clean, non-custodial multi-chain wallet.</p><div className="actions"><a className="primary" href="/wallet/create">Create wallet</a><a className="secondary" href="/wallet/import">Import wallet</a></div>{hasEncryptedWallet() && <div className="unlock"><label>Unlock existing wallet</label><input type="password" value={unlock} onChange={e => setUnlock(e.target.value)} placeholder="Wallet password"/><button className="primary" onClick={unlockWallet}>Unlock</button>{error && <div className="error">{error}</div>}</div>}</section></main>;
 
-        <div className="grid gap-6 md:grid-cols-[1.4fr_1fr]">
-          <section className="card p-6">
-            <div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-semibold">Assets</h2><button className="muted text-sm">View all</button></div>
-            <div className="space-y-2">{assets.map(asset => <div key={asset.symbol} className="flex items-center justify-between rounded-2xl p-3 hover:bg-white/5"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-white/10 font-bold">{asset.symbol[0]}</div><div><div className="font-medium">{asset.name}</div><div className="muted text-xs">{asset.amount} {asset.symbol}</div></div></div><div className="text-right"><div>{formatUsd(asset.price * Number(asset.amount))}</div><div className="muted text-xs">{asset.price ? formatUsd(asset.price) : '—'}</div></div></div>)}</div>
-          </section>
-
-          <section className="card p-6">
-            <h2 className="text-lg font-semibold">Recent activity</h2>
-            <div className="grid min-h-48 place-items-center text-center"><div><div className="text-3xl">◌</div><p className="muted mt-3 text-sm">Transactions will appear here</p></div></div>
-          </section>
-        </div>
-
-        <footer className="muted mt-8 text-center text-xs">AURELIS is non-custodial. Never share your recovery phrase or private keys.</footer>
-      </div>
-
-      {showReceive && <div className="fixed inset-0 grid place-items-center bg-black/70 p-5" onClick={() => setShowReceive(false)}><div className="card w-full max-w-md p-7" onClick={e => e.stopPropagation()}><div className="flex justify-between"><h2 className="text-xl font-bold">Receive on {network}</h2><button onClick={() => setShowReceive(false)}>✕</button></div><p className="muted mt-2 text-sm">Send only compatible assets to this address.</p><div className="my-7 break-all rounded-xl border border-[#263142] p-4 font-mono text-xs">{address}</div><button onClick={() => navigator.clipboard?.writeText(address)} className="w-full rounded-xl bg-white py-3 font-semibold text-black">Copy address</button></div></div>}
-    </main>
-  );
+  return <main className="shell"><header className="top"><div><p className="eyebrow">AURELIS</p><h2>Portfolio</h2></div><span className="address">{address.slice(0,6)}…{address.slice(-4)}</span></header><section className="balance"><span>Total balance on {chain.name}</span><strong>{Number(balance).toFixed(6)} {chain.nativeCurrency.symbol}</strong></section><section className="grid"><div className="card"><span className="muted">Network</span><select value={chainId} onChange={e => setChainId(Number(e.target.value))}>{AURELIS_CHAINS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div><div className="card"><span className="muted">Wallet address</span><p className="address-full">{address}</p></div></section><nav className="nav"><a href="/send">Send</a><a href="/receive">Receive</a><a href="/assets">Assets</a><a href="/transactions">Transactions</a></nav></main>;
 }
