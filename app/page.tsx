@@ -12,7 +12,7 @@ export default function Home() {
   const [balance, setBalance] = useState('0');
   const [unlock, setUnlock] = useState('');
   const [error, setError] = useState('');
-  const [chainId, setChainId] = useState(DEFAULT_CHAIN.id);
+  const [chainId, setChainId] = useState<number>(DEFAULT_CHAIN.id);
   const chain = useMemo(() => AURELIS_CHAINS.find((c) => c.id === chainId) ?? DEFAULT_CHAIN, [chainId]);
 
   useEffect(() => { const params = new URLSearchParams(window.location.search); const a = params.get('address') as `0x${string}` | null; if (a) setAddress(a); }, []);
