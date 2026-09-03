@@ -1,0 +1,5 @@
+'use client';
+import {useState} from 'react';
+import {connectWalletConnect} from '@/lib/wallet/walletconnect';
+import {AURELIS_CHAINS} from '@/lib/chains';
+export default function ConnectDapp(){const [status,setStatus]=useState('');const [accounts,setAccounts]=useState<string[]>([]);async function connect(){try{setStatus('Opening WalletConnect…');const a=await connectWalletConnect(AURELIS_CHAINS.map(c=>c.id));setAccounts(a);setStatus('dApp session connected.');}catch(e){setStatus(e instanceof Error?e.message:'Connection failed.');}}return <main className="shell"><section className="card"><p className="eyebrow">AURELIS • WALLETCONNECT</p><h1>Connect a dApp</h1><p className="muted">Start a real WalletConnect pairing session. Review every request before signing.</p><button className="primary" onClick={connect}>Connect with WalletConnect</button>{status&&<div className={accounts.length?'success':'error'}>{status}</div>}{accounts.length>0&&<div className="address-box">Connected account<br/><strong>{accounts[0]}</strong></div>}<a href="/dapps">Back to dApps</a></section></main>}
