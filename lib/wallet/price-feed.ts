@@ -1,0 +1,4 @@
+export type PricePoint={id:string;usd:number;updatedAt:number};
+const CACHE='aurelis.prices.v1';
+export async function fetchUsdPrices(ids:string[]){if(!ids.length)return{} as Record<string,PricePoint>;const url=`https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids.join(','))}&vs_currencies=usd`;const res=await fetch(url,{headers:{accept:'application/json'}});if(!res.ok)throw new Error(`Price provider unavailable (${res.status}).`);const data=await res.json() as Record<string,{usd?:number}>;const out:Record<string,PricePoint>={};for(const id of ids){if(typeof data[id]?.usd==='number')out[id]={id,usd:data[id]!.usd!,updatedAt:Date.now()};}if(typeof window!=='undefined')localStorage.setItem(CACHE,JSON.stringify(out));return out;}
+export function cachedUsdPrices(){if(typeof window==='undefined')return{} as Record<string,PricePoint>;try{return JSON.parse(localStorage.getItem(CACHE)??'{}')}catch{return{}}}
