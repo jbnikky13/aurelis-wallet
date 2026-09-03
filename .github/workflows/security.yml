@@ -1,9 +1,11 @@
 name: AURELIS Security Checks
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
   security:
     runs-on: ubuntu-latest
@@ -11,9 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
+          node-version: 22
+      - run: npm install --no-audit --no-fund
       - run: npm audit --audit-level=high
-      - run: npx vitest run
+      - run: npm run test:security
       - run: npm run build
