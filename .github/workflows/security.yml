@@ -14,15 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-      - run: npm install --no-audit --no-fund
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
       - name: Audit dependencies
         run: |
           npm audit --audit-level=high --json > npm-audit.json || true
           node -e "const r=require('./npm-audit.json'); console.log('npm audit:', r.metadata?.vulnerabilities || 'report generated')"
-      - run: npm run test:security
-      - run: npm run build
+      - name: Security tests
+        run: npm run test:security
+      - name: Production build
+        run: npm run build
