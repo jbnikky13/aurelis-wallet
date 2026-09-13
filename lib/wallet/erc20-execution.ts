@@ -37,7 +37,9 @@ export async function executeErc20(
     chain,
   });
 
-  recordPending(chain, hash, kind, {
+  // The activity model represents all ERC-20 actions as token activity;
+  // `kind` remains available on the execution result for the UI.
+  recordPending(chain, hash, 'token', {
     token: safeToken,
     from: safeAccount,
     to: target,
@@ -48,7 +50,7 @@ export async function executeErc20(
     addActivity({
       hash,
       chainId: chain.id,
-      type: kind,
+      type: 'token',
       status: receipt.status === 'success' ? 'confirmed' : 'failed',
       createdAt: new Date().toISOString(),
       amount: safeAmount.toString(),
@@ -59,7 +61,7 @@ export async function executeErc20(
     addActivity({
       hash,
       chainId: chain.id,
-      type: kind,
+      type: 'token',
       status: 'failed',
       createdAt: new Date().toISOString(),
       amount: safeAmount.toString(),
