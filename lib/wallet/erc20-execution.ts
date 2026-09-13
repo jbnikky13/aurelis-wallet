@@ -37,7 +37,6 @@ export async function executeErc20(
     chain,
   });
 
-  // The activity model represents all ERC-20 actions as token activity.
   recordPending(chain, hash, 'token', {
     from: safeAccount,
     to: target,
