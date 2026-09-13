@@ -3,6 +3,7 @@ import { getWalletConnectConfig } from './walletconnect-config';
 import { AURELIS_CHAINS } from '../chains';
 
 type ReownProvider = Awaited<ReturnType<typeof EthereumProvider.init>>;
+type NonEmptyNumberArray = [number, ...number[]];
 
 let provider: ReownProvider | null = null;
 
@@ -10,11 +11,13 @@ export async function getReownProvider(): Promise<ReownProvider> {
   if (provider) return provider;
 
   const cfg = getWalletConnectConfig();
+  const optionalChains = AURELIS_CHAINS.map((chain) => chain.id) as NonEmptyNumberArray;
+
   provider = await EthereumProvider.init({
     projectId: cfg.projectId,
     metadata: cfg.metadata,
     showQrModal: true,
-    optionalChains: AURELIS_CHAINS.map((c) => c.id),
+    optionalChains,
     optionalMethods: [
       'eth_chainId',
       'eth_accounts',
