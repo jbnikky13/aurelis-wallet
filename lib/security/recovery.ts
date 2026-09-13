@@ -4,23 +4,32 @@ const PBKDF2_ITERATIONS = 310_000;
 const SALT_BYTES = 16;
 const IV_BYTES = 12;
 
+type WebCryptoBytes = Uint8Array<ArrayBuffer>;
+
 function requireCrypto() {
   if (typeof crypto === 'undefined' || !crypto.subtle) throw new Error('Web Crypto API is unavailable.');
   return crypto;
 }
 
-function randomBytes(length: number) {
-  const bytes = new Uint8Array(length);
+function randomBytes(length: number): WebCryptoBytes {
+  const bytes = new Uint8Array(new ArrayBuffer(length));
   requireCrypto().getRandomValues(bytes);
   return bytes;
+}
+
+function toWebCryptoBytes(bytes: Uint8Array): WebCryptoBytes {
+  const copy = new Uint8Array(new ArrayBuffer(bytes.byteLength));
+  copy.set(bytes);
+  return copy;
 }
 
 async function deriveKey(password: string, salt: Uint8Array) {
   if (password.length < 12) throw new Error('Recovery password must contain at least 12 characters.');
   const c = requireCrypto();
-  const material = await c.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  const passwordBytes = new TextEncoder().encode(password);
+  const material = await c.subtle.importKey('raw', toWebCryptoBytes(passwordBytes), 'PBKDF2', false, ['deriveKey']);
   return c.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: toWebCryptoBytes(salt), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
     material,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -46,7 +55,7 @@ export async function encryptRecoverySecret(secret: string, password: string): P
   const encrypted = await requireCrypto().subtle.encrypt(
     { name: 'AES-GCM', iv },
     key,
-    new TextEncoder().encode(secret),
+    toWebCryptoBytes(new TextEncoder().encode(secret)),
   );
   return {
     version: 1,
@@ -67,9 +76,9 @@ export async function decryptRecoverySecret(payload: EncryptedRecovery, password
   const key = await deriveKey(password, hexToBytes(payload.salt));
   try {
     const plaintext = await requireCrypto().subtle.decrypt(
-      { name: 'AES-GCM', iv: hexToBytes(payload.iv) },
+      { name: 'AES-GCM', iv: toWebCryptoBytes(hexToBytes(payload.iv)) },
       key,
-      hexToBytes(payload.ciphertext),
+      toWebCryptoBytes(hexToBytes(payload.ciphertext)),
     );
     return new TextDecoder().decode(plaintext);
   } catch {
