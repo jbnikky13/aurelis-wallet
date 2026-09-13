@@ -1,7 +1,7 @@
-import { generateMnemonic, mnemonicToAccount } from 'viem/accounts';
+import { english, generateMnemonic, mnemonicToAccount } from 'viem/accounts';
 
 export function createMnemonic() {
-  return generateMnemonic();
+  return generateMnemonic(english);
 }
 
 export function accountFromMnemonic(mnemonic: string) {
