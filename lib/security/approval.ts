@@ -39,16 +39,11 @@ export type ApprovalSummary = {
   requiresConfirmation: boolean;
 };
 
-export function buildApprovalSummary(
-  check: TransactionCheck,
-  chain: Chain,
-  origin: string,
-): ApprovalSummary {
+export function buildApprovalSummary(check: TransactionCheck, chain: Chain, origin: string): ApprovalSummary {
   const description = describeDappTransaction(check.transaction);
   const warnings = [...check.warnings];
   if (!check.sufficientBalance) warnings.unshift('Insufficient balance.');
   if (!check.simulationOk) warnings.unshift('Simulation failed. Do not sign this transaction.');
-
   return {
     title: description.action,
     origin,
