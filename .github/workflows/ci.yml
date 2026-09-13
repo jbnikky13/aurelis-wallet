@@ -25,7 +25,6 @@ jobs:
 
   cleanup-branches:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Delete all branches except main
