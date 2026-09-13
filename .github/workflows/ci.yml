@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -22,3 +22,27 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Production build
         run: npm run build
+
+  cleanup-branches:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete all branches except main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --paginate \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${REPO}/branches?per_page=100" \
+            --jq '.[].name' | while IFS= read -r branch; do
+              if [ "$branch" != "main" ]; then
+                echo "Deleting branch: $branch"
+                gh api --method DELETE \
+                  -H 'Accept: application/vnd.github+json' \
+                  "/repos/${REPO}/git/refs/heads/${branch}"
+              fi
+            done
