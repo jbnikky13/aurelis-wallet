@@ -26,5 +26,7 @@ jobs:
           node -e "const r=require('./npm-audit.json'); console.log('npm audit:', r.metadata?.vulnerabilities || 'report generated')"
       - name: Security tests
         run: npm run test:security
+      - name: Integration tests
+        run: npm run test:integration
       - name: Production build
         run: npm run build
