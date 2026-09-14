@@ -8,7 +8,7 @@ import { decryptWallet } from '@/lib/wallet/crypto';
 import { accountFromMnemonic } from '@/lib/wallet/mnemonic';
 
 export default function SendPage() {
-  const [chainId, setChainId] = useState(DEFAULT_CHAIN.id);
+  const [chainId, setChainId] = useState<number>(DEFAULT_CHAIN.id);
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
   const [password, setPassword] = useState('');
