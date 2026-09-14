@@ -20,7 +20,7 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Integration tests
+      - name: Integration and hardening tests
         run: npm run test:integration
       - name: Production build
         run: npm run build
