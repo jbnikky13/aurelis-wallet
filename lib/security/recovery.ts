@@ -5,6 +5,7 @@ const SALT_BYTES = 16;
 const IV_BYTES = 12;
 
 type WebCryptoBytes = Uint8Array<ArrayBuffer>;
+type HexString = `0x${string}`;
 
 function requireCrypto() {
   if (typeof crypto === 'undefined' || !crypto.subtle) throw new Error('Web Crypto API is unavailable.');
@@ -21,6 +22,13 @@ function toWebCryptoBytes(bytes: Uint8Array): WebCryptoBytes {
   const copy = new Uint8Array(new ArrayBuffer(bytes.byteLength));
   copy.set(bytes);
   return copy;
+}
+
+function decodeHex(value: string): WebCryptoBytes {
+  if (!/^0x[0-9a-fA-F]*$/.test(value) || value.length % 2 !== 0) {
+    throw new Error('Invalid recovery backup encoding.');
+  }
+  return toWebCryptoBytes(hexToBytes(value as HexString));
 }
 
 async function deriveKey(password: string, salt: Uint8Array) {
@@ -73,12 +81,20 @@ export async function decryptRecoverySecret(payload: EncryptedRecovery, password
     throw new Error('Unsupported recovery backup format.');
   }
   if (payload.iterations !== PBKDF2_ITERATIONS) throw new Error('Unsupported recovery KDF settings.');
-  const key = await deriveKey(password, hexToBytes(payload.salt));
+
+  let key: CryptoKey;
   try {
+    const salt = decodeHex(payload.salt);
+    const iv = decodeHex(payload.iv);
+    const ciphertext = decodeHex(payload.ciphertext);
+    if (salt.byteLength !== SALT_BYTES || iv.byteLength !== IV_BYTES || ciphertext.byteLength === 0) {
+      throw new Error('Invalid recovery backup encoding.');
+    }
+    key = await deriveKey(password, salt);
     const plaintext = await requireCrypto().subtle.decrypt(
-      { name: 'AES-GCM', iv: toWebCryptoBytes(hexToBytes(payload.iv)) },
+      { name: 'AES-GCM', iv },
       key,
-      toWebCryptoBytes(hexToBytes(payload.ciphertext)),
+      ciphertext,
     );
     return new TextDecoder().decode(plaintext);
   } catch {
