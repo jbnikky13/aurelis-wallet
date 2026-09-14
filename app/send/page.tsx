@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import { formatEther, isAddress, parseEther } from 'viem';
 import { AURELIS_CHAINS, DEFAULT_CHAIN } from '@/lib/chains';
-import { publicClientFor } from '@/lib/providers';
+import { reportRuntimeError } from '@/lib/errors';
+import { publicClientFor, withRpcRecovery } from '@/lib/providers';
 import { decryptWallet } from '@/lib/wallet/crypto';
 import { accountFromMnemonic } from '@/lib/wallet/mnemonic';
 
@@ -34,21 +35,18 @@ export default function SendPage() {
       const mnemonic = await decryptWallet(password);
       const account = accountFromMnemonic(mnemonic);
       const client = publicClientFor(chain);
-      const balance = await client.getBalance({ address: account.address });
-      const gas = await client.estimateGas({ account, to: to as `0x${string}`, value });
-      const gasPrice = await client.getGasPrice();
+
+      const balance = await withRpcRecovery(chain.id, () => client.getBalance({ address: account.address }));
+      const gas = await withRpcRecovery(chain.id, () => client.estimateGas({ account, to: to as `0x${string}`, value }));
+      const gasPrice = await withRpcRecovery(chain.id, () => client.getGasPrice());
       const fee = gas * gasPrice;
 
       if (balance < value + fee) {
-        throw new Error(
-          `Insufficient ${chain.nativeCurrency.symbol} for the amount plus estimated network fee.`,
-        );
+        throw new Error(`Insufficient ${chain.nativeCurrency.symbol} for the amount plus estimated network fee.`);
       }
 
-      const nonce = await client.getTransactionCount({ address: account.address });
-      setStatus(
-        `Ready to sign ${formatEther(value)} ${chain.nativeCurrency.symbol} on ${chain.name}.`,
-      );
+      const nonce = await withRpcRecovery(chain.id, () => client.getTransactionCount({ address: account.address }));
+      setStatus(`Ready to sign ${formatEther(value)} ${chain.nativeCurrency.symbol} on ${chain.name}.`);
 
       const serialized = await account.signTransaction({
         to: to as `0x${string}`,
@@ -61,11 +59,11 @@ export default function SendPage() {
       });
 
       setStatus('Broadcasting transaction…');
-      const txHash = await client.sendRawTransaction({ serializedTransaction: serialized });
+      const txHash = await withRpcRecovery(chain.id, () => client.sendRawTransaction({ serializedTransaction: serialized }));
       setStatus(`Broadcast successfully: ${txHash}`);
     } catch (e) {
       setStatus('');
-      setError(e instanceof Error ? e.message : 'Transaction failed.');
+      setError(reportRuntimeError('send-transaction-failed', e, chain.id));
     } finally {
       setBusy(false);
       setPassword('');
@@ -91,30 +89,13 @@ export default function SendPage() {
         </select>
 
         <label>Recipient</label>
-        <input
-          value={to}
-          onChange={(event) => setTo(event.target.value)}
-          placeholder="0x…"
-          autoComplete="off"
-          spellCheck={false}
-        />
+        <input value={to} onChange={(event) => setTo(event.target.value)} placeholder="0x…" autoComplete="off" spellCheck={false} />
 
         <label>Amount</label>
-        <input
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          placeholder="0.00"
-          inputMode="decimal"
-        />
+        <input value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" inputMode="decimal" />
 
         <label>Wallet password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Unlock to sign"
-          autoComplete="current-password"
-        />
+        <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Unlock to sign" autoComplete="current-password" />
 
         <button className="primary" onClick={send} disabled={busy}>
           {busy ? 'Sending…' : 'Review & send'}
