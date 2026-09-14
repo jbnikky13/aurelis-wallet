@@ -24,13 +24,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid address or chain.' }, { status: 400 });
   }
 
+  // Arc has an Etherscan-compatible explorer API, so its history can be
+  // indexed without requiring the Etherscan account key used by other chains.
+  const isArc = chain.id === 5042;
   const apiKey = process.env.ETHERSCAN_API_KEY;
-  if (!apiKey) {
+  if (!isArc && !apiKey) {
     return NextResponse.json({ items: [], indexed: false, reason: 'ETHERSCAN_API_KEY is not configured.' });
   }
 
-  const url = new URL('https://api.etherscan.io/v2/api');
-  url.searchParams.set('chainid', String(chain.id));
+  const url = new URL(isArc ? 'https://api.arc-scan.org/api' : 'https://api.etherscan.io/v2/api');
+  if (!isArc) url.searchParams.set('chainid', String(chain.id));
   url.searchParams.set('module', 'account');
   url.searchParams.set('action', 'txlist');
   url.searchParams.set('address', address);
@@ -39,10 +42,13 @@ export async function GET(request: NextRequest) {
   url.searchParams.set('page', '1');
   url.searchParams.set('offset', '50');
   url.searchParams.set('sort', 'desc');
-  url.searchParams.set('apikey', apiKey);
+  url.searchParams.set('apikey', apiKey ?? '');
 
   try {
-    const response = await fetch(url, { next: { revalidate: 15 } });
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'AURELIS-Wallet/1.0' },
+      next: { revalidate: 15 },
+    });
     if (!response.ok) throw new Error(`Explorer HTTP ${response.status}`);
     const data = await response.json() as { status: string; result: ExplorerTx[] | string };
     if (!Array.isArray(data.result)) {
