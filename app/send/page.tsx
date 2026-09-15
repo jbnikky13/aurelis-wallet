@@ -10,6 +10,13 @@ import { decryptWallet } from '@/lib/wallet/crypto';
 import { accountFromMnemonic } from '@/lib/wallet/mnemonic';
 import { extractWalletAddress } from '@/lib/qr';
 
+type BarcodeDetection = { rawValue?: string };
+type BarcodeDetectorInstance = {
+  detect: (source: ImageBitmapSource | HTMLVideoElement | HTMLImageElement | HTMLCanvasElement) => Promise<BarcodeDetection[]>;
+};
+type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => BarcodeDetectorInstance;
+type BarcodeDetectorWindow = Window & { BarcodeDetector?: BarcodeDetectorConstructor };
+
 export default function SendPage() {
   const [chainId, setChainId] = useState<number>(DEFAULT_CHAIN.id);
   const [to, setTo] = useState(''); const [amount, setAmount] = useState(''); const [password, setPassword] = useState('');
@@ -24,13 +31,13 @@ export default function SendPage() {
   async function startScanner() {
     setError('');
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { setError('Camera scanning requires a secure HTTPS connection and camera access.'); return; }
-    if (!('BarcodeDetector' in window)) { setError('QR scanning is not supported by this browser. Use Paste Address instead.'); return; }
+    const Detector = (window as BarcodeDetectorWindow).BarcodeDetector;
+    if (!Detector) { setError('QR scanning is not supported by this browser. Use Paste Address instead.'); return; }
     try {
-      const Detector = window.BarcodeDetector as typeof BarcodeDetector;
       const detector = new Detector({ formats: ['qr_code'] });
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
       streamRef.current = stream; setScanning(true);
-      if (!videoRef.current) return;
+      if (!videoRef.current) { stopScanner(); setError('Unable to initialize the QR camera preview.'); return; }
       videoRef.current.srcObject = stream; await videoRef.current.play();
       scanTimer.current = window.setInterval(async () => {
         if (!videoRef.current || videoRef.current.readyState < 2) return;
