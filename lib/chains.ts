@@ -1,10 +1,19 @@
 import { arbitrum, avalanche, base, bsc, mainnet, optimism, polygon } from 'viem/chains';
 import { defineChain, type Chain } from 'viem';
 
-// Arc Mainnet is scheduled for public launch on September 16, 2026.
-// The RPC is kept overridable so an official Circle endpoint can replace the
-// public Arcscan gateway without another code change.
-const arcRpc = process.env.NEXT_PUBLIC_ARC_RPC_URL?.trim() || 'https://rpc.arc-scan.org';
+/**
+ * Arc Mainnet
+ * - Chain ID: 5042
+ * - Native gas currency: USDC (18 native decimals)
+ * - Official production RPC: https://rpc.mainnet.arc.io
+ * - Official explorer: https://explorer.arc.io
+ *
+ * Arc is EVM-compatible and publicly live as of September 16, 2026.
+ * The RPC remains overridable for operational resilience, but the
+ * production default must always point at Arc Mainnet.
+ */
+const ARC_MAINNET_RPC = 'https://rpc.mainnet.arc.io';
+const arcRpc = process.env.NEXT_PUBLIC_ARC_RPC_URL?.trim() || ARC_MAINNET_RPC;
 
 export const arc = defineChain({
   id: 5042,
@@ -19,7 +28,7 @@ export const arc = defineChain({
     public: { http: [arcRpc] },
   },
   blockExplorers: {
-    default: { name: 'Arcscan', url: 'https://arc-scan.org' },
+    default: { name: 'Arc Explorer', url: 'https://explorer.arc.io' },
   },
   testnet: false,
 });
