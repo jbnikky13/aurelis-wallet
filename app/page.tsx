@@ -56,6 +56,6 @@ export default function Home() {
     <section className="balance"><span>Total balance on {chain.name}</span><strong>{Number(balance).toFixed(6)} {chain.nativeCurrency.symbol}</strong>{isArc && <small className="muted">USDC is the native gas asset on Arc.</small>}</section>
     <section className="grid"><div className="card"><span className="muted">Network</span><select value={chainId} onChange={e => setChainId(Number(e.target.value))}>{AURELIS_CHAINS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
       <div className="card"><span className="muted">Wallet address</span><p className="address-full">{address}</p></div></section>
-    <nav className="nav"><a href="/send">Send</a><a href="/receive">Receive</a><a href="/assets">Assets</a><a href={activityHref}>Transactions</a></nav>
+    <nav className="nav"><a href="/send">Send</a><a href="/receive">Receive</a><a href="/assets">Assets</a><a href={activityHref}>Transactions</a><a href="/settings/security">Security</a></nav>
   </main>;
 }

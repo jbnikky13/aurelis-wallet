@@ -68,13 +68,25 @@ export async function decryptWallet(password: string) {
   const iv = base64ToBytes(payload.iv);
   const data = base64ToBytes(payload.data);
   const key = await deriveKey(password, base64ToBytes(payload.salt));
-  const plaintext = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: toArrayBuffer(iv) },
-    key,
-    toArrayBuffer(data),
-  );
+  let plaintext: ArrayBuffer;
+  try {
+    plaintext = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: toArrayBuffer(iv) },
+      key,
+      toArrayBuffer(data),
+    );
+  } catch {
+    // AES-GCM intentionally exposes no detail about whether the password or
+    // ciphertext was wrong. Give the UI a safe, actionable error instead of
+    // leaking a browser-specific DOMException.
+    throw new Error('Unable to decrypt wallet. Check your wallet password or restore the wallet from its recovery phrase.');
+  }
 
-  return new TextDecoder().decode(plaintext);
+  try {
+    return new TextDecoder().decode(plaintext);
+  } catch {
+    throw new Error('Wallet data was decrypted but could not be decoded. Restore the wallet from its recovery phrase.');
+  }
 }
 
 export function hasEncryptedWallet() {

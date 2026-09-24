@@ -55,3 +55,18 @@ describe('AURELIS security validation', () => {
     })).toThrow();
   });
 });
+
+
+describe('private secret derivation', () => {
+  it('derives a private key from a valid recovery phrase', async () => {
+    const { createMnemonic, privateKeyFromMnemonic, validateMnemonic } = await import('../lib/wallet/mnemonic');
+    const mnemonic = createMnemonic();
+    expect(validateMnemonic(mnemonic)).toBe(true);
+    expect(privateKeyFromMnemonic(mnemonic)).toMatch(/^0x[0-9a-fA-F]{64}$/);
+  });
+
+  it('rejects an invalid recovery phrase', async () => {
+    const { privateKeyFromMnemonic } = await import('../lib/wallet/mnemonic');
+    expect(() => privateKeyFromMnemonic('not a valid recovery phrase')).toThrow();
+  });
+});

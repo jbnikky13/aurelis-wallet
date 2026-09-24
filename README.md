@@ -15,11 +15,15 @@ AURELIS is a modern, multi-chain, non-custodial EVM wallet.
 
 ## Supported networks
 
-Ethereum, Base, BNB Chain, Polygon, Arbitrum, Optimism and Avalanche.
+Ethereum, Base, BNB Chain, Polygon, Arbitrum, Optimism, Avalanche, and Arc.
 
 ## Security principles
 
-Private keys and recovery phrases must never be committed to GitHub or stored in Supabase. Production wallet creation/import will use audited wallet primitives and client-side encryption. The current receive address shown in the demo UI is intentionally a zero address and must not be used for funds.
+- Private keys and recovery phrases must never be committed to GitHub or stored in Supabase.
+- Wallet secrets are handled locally and transaction signing stays client-side.
+- No application-specific PharmaTrace contract integration, deployment flow, ABI, or contract registry is included in this wallet.
+- No wallet signing flow is exposed to an external PharmaTrace deployment or registration process.
+- Production wallet creation/import will use audited wallet primitives and client-side encryption.
 
 ## Development
 
@@ -32,4 +36,4 @@ Open http://localhost:3000.
 
 ## Status
 
-AURELIS v0.1 foundation. The next implementation phase connects real wallet generation/import, live chain balances, transaction signing, RPC providers, and production security controls.
+AURELIS wallet foundation with multi-chain balances, wallet creation/import, send/receive flows, transaction history, security controls, and Arc support.

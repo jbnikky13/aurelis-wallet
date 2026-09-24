@@ -36,3 +36,22 @@ export function assertChain(expected: number, actual: number): void {
     throw new Error(`Wrong network: expected ${expected}, received ${actual}.`);
   }
 }
+
+
+export function assertContractAddress(value: unknown): Address {
+  if (typeof value !== 'string' || !/^0x[0-9a-fA-F]{40}$/.test(value) || !isAddress(value)) {
+    throw new Error('Invalid contract address.');
+  }
+  return value as Address;
+}
+
+export function readStoredContractAddress(key = 'aurelis.pharmatrace.contractAddress'): Address | null {
+  if (typeof window === 'undefined') return null;
+  const value = window.localStorage.getItem(key);
+  if (!value) return null;
+  try {
+    return assertContractAddress(value.trim());
+  } catch {
+    return null;
+  }
+}
