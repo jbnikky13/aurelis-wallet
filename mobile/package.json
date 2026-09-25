@@ -28,7 +28,10 @@
     "viem": "^2.33.0",
     "@expo/vector-icons": "^15.0.2",
     "react-dom": "19.2.3",
-    "expo-camera": "~17.0.10"
+    "expo-camera": "~17.0.10",
+    "@walletconnect/react-native-compat": "^2.21.6",
+    "@walletconnect/sign-client": "^2.21.6",
+    "@walletconnect/utils": "^2.21.6"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

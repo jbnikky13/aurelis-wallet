@@ -44,7 +44,8 @@
         {
           "cameraPermission": "Allow AURELIS to scan wallet QR codes."
         }
-      ]
+      ],
+      "@walletconnect/react-native-compat"
     ],
     "experiments": {
       "typedRoutes": true
