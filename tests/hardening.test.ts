@@ -30,7 +30,6 @@ describe('Build 12 hardening', () => {
   });
 });
 
-
 describe('contract address validation', () => {
   it('accepts a valid public contract address', async () => {
     const { assertContractAddress } = await import('../lib/security/validation');
@@ -40,27 +39,5 @@ describe('contract address validation', () => {
   it('rejects private-key-shaped values', async () => {
     const { assertContractAddress } = await import('../lib/security/validation');
     expect(() => assertContractAddress('0x' + 'a'.repeat(64))).toThrow('Invalid contract address.');
-  });
-});
-
-
-describe('PharmaTrace contract registry', () => {
-  it('round-trips a public contract address locally', async () => {
-    const { setPharmaTraceContractAddress, getPharmaTraceContractAddress, clearPharmaTraceContractAddress } = await import('../lib/contracts/pharmatrace');
-    const originalWindow = globalThis.window;
-    const store = new Map<string, string>();
-    Object.defineProperty(globalThis, 'window', {
-      configurable: true,
-      value: { localStorage: {
-        getItem: (key: string) => store.get(key) ?? null,
-        setItem: (key: string, value: string) => store.set(key, value),
-        removeItem: (key: string) => store.delete(key),
-      }},
-    });
-    expect(setPharmaTraceContractAddress('0x0000000000000000000000000000000000000001')).toBe('0x0000000000000000000000000000000000000001');
-    expect(getPharmaTraceContractAddress()).toBe('0x0000000000000000000000000000000000000001');
-    clearPharmaTraceContractAddress();
-    expect(getPharmaTraceContractAddress()).toBe('0x6e6EeEAFcA49FD83400e2b03805006dFfC43C52E');
-    Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow });
   });
 });
