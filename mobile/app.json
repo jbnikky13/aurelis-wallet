@@ -11,11 +11,13 @@
       "bundleIdentifier": "com.jbnikky.aureliswallet",
       "infoPlist": {
         "NSFaceIDUsageDescription": "AURELIS uses Face ID to protect your wallet."
-      }
+      },
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.jbnikky.aureliswallet",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#080A0F"
       }
     },
@@ -49,6 +51,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#080A0F"
     }
   }
 }
