@@ -1,0 +1,1 @@
+import * as SecureStore from 'expo-secure-store';export async function setSecure(key:string,value:string){await SecureStore.setItemAsync(key,value,{requireAuthentication:true});}export async function getSecure(key:string){return SecureStore.getItemAsync(key);}export async function removeSecure(key:string){await SecureStore.deleteItemAsync(key);}
