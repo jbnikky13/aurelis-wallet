@@ -22,5 +22,4 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package.json
       - run: npm install --legacy-peer-deps --no-audit --no-fund
-      - run: npx expo install --fix
       - run: npx tsc --noEmit
