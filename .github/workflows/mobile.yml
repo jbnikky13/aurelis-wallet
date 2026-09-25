@@ -1,0 +1,23 @@
+name: AURELIS Mobile
+on:
+  push:
+    branches: [main]
+    paths: ['mobile/**']
+  pull_request:
+    branches: [main]
+    paths: ['mobile/**']
+permissions:
+  contents: read
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx tsc --noEmit
