@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+          cache: npm
+          cache-dependency-path: mobile/package.json
+      - run: npm install --legacy-peer-deps --no-audit --no-fund
       - run: npx expo install --fix
       - run: npx tsc --noEmit
