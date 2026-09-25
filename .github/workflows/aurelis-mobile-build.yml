@@ -1,0 +1,51 @@
+name: AURELIS Mobile Native Builds
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Native platform to build
+        required: true
+        default: all
+        type: choice
+        options: [all, android, ios]
+      profile:
+        description: EAS build profile
+        required: true
+        default: development
+        type: choice
+        options: [development, preview, production]
+  push:
+    paths:
+      - "mobile/**"
+      - ".github/workflows/aurelis-mobile-build.yml"
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package.json
+      - run: npm install
+      - run: npx tsc --noEmit
+
+  eas-build:
+    if: github.event_name == 'workflow_dispatch'
+    needs: typecheck
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+        working-directory: mobile
+      - run: npx eas-cli@latest build --platform ${{ inputs.platform }} --profile ${{ inputs.profile }} --non-interactive
+        working-directory: mobile
